@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Список книг</title>
+</head>
+
+<body>
+    <h1>Список книг</h1>
+
+    <a href="{% url 'book_create' %}">Добавить новую книгу</a>
+
+    <ul>
+        {% for book in page_obj %}
+        <li>
+            <strong>{{ book.title }}</strong> - {{ book.author }} - <p>{{book.price}}</p>
+            <a href="{% url 'book_update' pk=book.pk %}">Изменить</a> |
+            <form method="post" action="{% url 'book_delete' pk=book.pk %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit">Удалить</button>
+            </form>
+        </li>
+        {% empty %}
+        <li>Нет доступных книг.</li>
+        {% endfor %}
+    </ul>
+
+    <!-- Пагинация -->
+    <div>
+        <span>Показано {{ page_obj.paginator.count }} книг</span>
+        <div>
+            {% if page_obj.has_previous %}
+            <a href="?page=1">Первая</a>
+            <a href="?page={{ page_obj.previous_page_number }}">Предыдущая</a>
+            {% endif %}
+
+            <span>Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span>
+
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}">Следующая</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}">Последняя</a>
+            {% endif %}
+        </div>
+    </div>
+</body>
+
+</html>
