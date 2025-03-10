@@ -1,10 +1,12 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.paginator import Paginator
-from .models import Book, Cart
+from .models import Book, Cart, Order, OrderItem
 from .forms import BookForm, UserProfileForm
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.decorators import login_required, user_passes_test
+import random
+from django.http import HttpResponse
 
 # Функция для проверки, является ли пользователь администратором
 
@@ -117,6 +119,7 @@ def user_profile(request):
         form = UserProfileForm(instance=user)
     return render(request, 'books/profile.html', {'form': form})
 
+
 @login_required
 def add_to_cart(request, book_id):
     book = Book.objects.get(id=book_id)
@@ -131,10 +134,13 @@ def add_to_cart(request, book_id):
     return redirect('view_cart')  # перенаправляем на страницу корзины
 
 # Обновление корзины
+
+
 @login_required
 def update_cart(request):
     if request.method == 'POST':
-        cart_items = request.POST.getlist('cart_item_id')  # Получаем список товаров из формы
+        # Получаем список товаров из формы
+        cart_items = request.POST.getlist('cart_item_id')
         for item_id in cart_items:
             quantity = int(request.POST.get(f'quantity_{item_id}'))
             cart_item = Cart.objects.get(id=item_id)
@@ -146,9 +152,72 @@ def update_cart(request):
         return redirect('view_cart')
 
 # Просмотр корзины
+
+
 @login_required
 def view_cart(request):
     user = request.user
     cart_items = Cart.objects.filter(user=user)
     total_cost = sum(item.book.price * item.quantity for item in cart_items)
     return render(request, 'books/cart.html', {'cart_items': cart_items, 'total_cost': total_cost})
+
+# Удалить товар из корзины
+
+
+@login_required
+def remove_from_cart(request, cart_item_id):
+    cart_item = Cart.objects.get(id=cart_item_id, user=request.user)
+    cart_item.delete()
+    return redirect('view_cart')  # Перенаправление на страницу корзины
+
+# Оформить заказ
+
+
+@login_required
+def checkout(request):
+    user = request.user
+    cart_items = Cart.objects.filter(user=user)
+
+    if not cart_items:
+        return HttpResponse("Ваша корзина пуста!", status=400)
+
+    # Создание заказа
+    order = Order(user=user)
+    order.save()
+
+    # Добавление товаров из корзины в заказ
+    total_cost = 0
+    for item in cart_items:
+        order_item = OrderItem(
+            order=order, book=item.book, quantity=item.quantity)
+        order_item.save()
+        total_cost += item.book.price * item.quantity
+
+    # Обновляем случайный номер заказа (например, через random)
+    order_number = random.randint(1000, 9999)
+    order.number = order_number
+    order.total_cost = total_cost
+    order.save()
+
+    # Очистка корзины после оформления заказа
+    cart_items.delete()
+
+    # Перенаправление на страницу деталей заказа
+    return redirect('order_detail', order_id=order.id)
+
+# Детали заказа
+
+
+@login_required
+def order_detail(request, order_id):
+    order = Order.objects.get(id=order_id)
+    order_items = OrderItem.objects.filter(order=order)
+    total_cost = sum(item.book.price * item.quantity for item in order_items)
+
+    # Отображаем информацию о заказе
+    return render(request, 'books/order_detail.html', {
+        'order': order,
+        'order_items': order_items,
+        'total_cost': total_cost,
+        'order_date': order.created_at.strftime("%d-%m-%Y %H:%M:%S"),
+    })
