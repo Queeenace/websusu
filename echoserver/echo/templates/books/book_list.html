@@ -10,6 +10,7 @@
     <h1>Список книг</h1>
 
     <a href="{% url 'book_create' %}">Добавить новую книгу</a>
+    <a href="{% url 'profile' %}" style="margin-left: 20px;">Личный кабинет</a>
 
     <ul>
         {% for book in page_obj %}

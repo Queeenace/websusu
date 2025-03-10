@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.paginator import Paginator
 from .models import Book
-from .forms import BookForm
+from .forms import BookForm, UserProfileForm
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -102,3 +102,17 @@ def login_view(request):
 def logout_view(request):
     logout(request)
     return redirect('book_list')
+# Личный кабинет
+
+
+@login_required
+def user_profile(request):
+    user = request.user
+    if request.method == "POST":
+        form = UserProfileForm(request.POST, instance=user)
+        if form.is_valid():
+            form.save()
+            return redirect('profile')
+    else:
+        form = UserProfileForm(instance=user)
+    return render(request, 'books/profile.html', {'form': form})
