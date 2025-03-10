@@ -1,0 +1,27 @@
+<!-- cart.html -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Корзина</title>
+</head>
+
+<body>
+    <h1>Ваша корзина</h1>
+
+    {% if cart_items %}
+    <ul>
+        {% for item in cart_items %}
+        <li>
+            {{ item.book.title }} - {{ item.quantity }} шт. - {{ item.book.price|floatformat:2 }} ₽
+        </li>
+        {% endfor %}
+    </ul>
+    <h3>Общая стоимость: {{ total_cost|floatformat:2 }} ₽</h3>
+    {% else %}
+    <p>Ваша корзина пуста.</p>
+    {% endif %}
+</body>
+
+</html>

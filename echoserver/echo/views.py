@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.paginator import Paginator
-from .models import Book
+from .models import Book, Cart
 from .forms import BookForm, UserProfileForm
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
@@ -116,3 +116,39 @@ def user_profile(request):
     else:
         form = UserProfileForm(instance=user)
     return render(request, 'books/profile.html', {'form': form})
+
+@login_required
+def add_to_cart(request, book_id):
+    book = Book.objects.get(id=book_id)
+    user = request.user  # получаем текущего пользователя
+    cart_item, created = Cart.objects.get_or_create(user=user, book=book)
+
+    if not created:
+        # если товар уже есть в корзине, увеличиваем количество
+        cart_item.quantity += 1
+        cart_item.save()
+
+    return redirect('view_cart')  # перенаправляем на страницу корзины
+
+# Обновление корзины
+@login_required
+def update_cart(request):
+    if request.method == 'POST':
+        cart_items = request.POST.getlist('cart_item_id')  # Получаем список товаров из формы
+        for item_id in cart_items:
+            quantity = int(request.POST.get(f'quantity_{item_id}'))
+            cart_item = Cart.objects.get(id=item_id)
+            if quantity > 0:
+                cart_item.quantity = quantity
+                cart_item.save()
+            else:
+                cart_item.delete()  # Если количество = 0, удаляем товар из корзины
+        return redirect('view_cart')
+
+# Просмотр корзины
+@login_required
+def view_cart(request):
+    user = request.user
+    cart_items = Cart.objects.filter(user=user)
+    total_cost = sum(item.book.price * item.quantity for item in cart_items)
+    return render(request, 'books/cart.html', {'cart_items': cart_items, 'total_cost': total_cost})

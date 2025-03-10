@@ -1,6 +1,6 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
-from .views import book_list, book_create, book_update, book_delete, register, login_view, logout_view, user_profile
+from .views import book_list, book_create, book_update, book_delete, register, login_view, logout_view, user_profile, add_to_cart, update_cart, view_cart
 
 urlpatterns = [
     # Страница регистрации
@@ -24,6 +24,12 @@ urlpatterns = [
     # Страница удаления книги
     path('book/<int:pk>/delete/', book_delete, name='book_delete'),
 
-    #Личный кабинет
+    # Личный кабинет
     path('profile/', user_profile, name='profile'),
+
+    path('add_to_cart/<int:book_id>/', add_to_cart, name='add_to_cart'),
+
+    path('update_cart/', update_cart, name='update_cart'),  # Обновление корзины
+
+    path('cart/', view_cart, name='view_cart'),
 ]

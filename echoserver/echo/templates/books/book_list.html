@@ -12,10 +12,26 @@
     <a href="{% url 'book_create' %}">Добавить новую книгу</a>
     <a href="{% url 'profile' %}" style="margin-left: 20px;">Личный кабинет</a>
 
+    <!-- Ссылка на корзину с количеством товаров -->
+    <a href="{% url 'view_cart' %}" style="margin-left: 20px;">
+        Корзина
+        {% if cart_item_count %}
+        ({{ cart_item_count }})
+        {% else %}
+        (0)
+        {% endif %}
+    </a>
+
     <ul>
         {% for book in page_obj %}
         <li>
-            <strong>{{ book.title }}</strong> - {{ book.author }} - <p>{{book.price}}</p>
+            <div style="display: flex; align-items: center;">
+                <strong>{{ book.title }}</strong> - {{ book.author }} - <p>{{ book.price }}</p>
+                <form method="post" action="{% url 'add_to_cart' book.pk %}" style="display:inline; margin-left: 10px;">
+                    {% csrf_token %}
+                    <button type="submit">Добавить в корзину</button>
+                </form>
+            </div>
             <a href="{% url 'book_update' pk=book.pk %}">Изменить</a> |
             <form method="post" action="{% url 'book_delete' pk=book.pk %}" style="display:inline;">
                 {% csrf_token %}
